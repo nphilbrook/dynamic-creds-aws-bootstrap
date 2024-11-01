@@ -1,6 +1,10 @@
+locals {
+  scope_to_project = var.tf_project_name == "*" ? 0 : 1
+}
+
 # Look up the project, if specified
 data "tfe_project" "project" {
-  count = var.tf_project_name == "*" ? 1 : 0
+  count = local.scope_to_project
   name  = var.tf_project_name
 }
 
@@ -12,7 +16,7 @@ resource "tfe_variable_set" "aws_variable_set" {
 }
 
 resource "tfe_project_variable_set" "project_association" {
-  count           = var.tf_project_name == "*" ? 1 : 0
+  count           = local.scope_to_project
   project_id      = data.tfe_project.project[0].id
   variable_set_id = tfe_variable_set.aws_variable_set.id
 }
