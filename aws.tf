@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
+locals {
+  # A descriptive suffix for the AWS resources created. If TF project is not specified, omit it.
+  aws_suffix = (var.tf_project_name == "*" ?
+    "${var.tf_organization_name}" :
+  "${var.tf_organization_name}-${var.tf_project_name}")
+}
+
 # Data source used to grab the TLS certificate for Terraform Cloud.
 #
 # https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate
@@ -20,7 +27,7 @@ resource "aws_iam_openid_connect_provider" "oidc_provider" {
 #
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role
 resource "aws_iam_role" "tf_role" {
-  name = "tf-role-${var.tf_organization_name}-${var.tf_project_name}"
+  name = "tf-${local.aws_suffix}"
 
   assume_role_policy = <<EOF
 {
@@ -55,7 +62,7 @@ EOF
 #
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy
 resource "aws_iam_policy" "tf_policy" {
-  name        = "tf-policy-${var.tf_organization_name}-${var.tf_project_name}"
+  name        = "tf-${local.aws_suffix}"
   description = "TFC run policy"
 
   policy = <<EOF

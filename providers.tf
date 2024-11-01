@@ -10,5 +10,6 @@ provider "aws" {
 }
 
 provider "tfe" {
-  hostname = var.tf_hostname
+  hostname     = var.tf_hostname
+  organization = var.tf_organization_name
 }
