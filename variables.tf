@@ -19,7 +19,7 @@ variable "tf_organization_name" {
 
 variable "tf_project_name" {
   type        = string
-  description = "The name of your HCP Terraform or TFE project. Leave the default '*' to enable for any projects in the above organization. If set to non-default, variable set will be scoped to this project as well."
+  description = "The name of an HCP Terraform or TFE project. Leave the default '*' to enable for any projects in the above organization. If set to non-default, both the variable set AND the AWS Role will be scoped to this project."
   default     = "*"
 }
 
