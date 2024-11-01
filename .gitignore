@@ -38,3 +38,6 @@ terraform.rc
 
 # Ignore lock file as I want HCP Terraform to update providers as per my constraints
 .terraform.lock.hcl
+
+# Plan files, by convention
+*plan

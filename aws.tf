@@ -14,13 +14,30 @@ data "tls_certificate" "tf_certificate" {
   url = "https://${var.tf_hostname}"
 }
 
-# Creates an OIDC provider which is restricted to
+# Checks for an existing OIDC provider for Terraform
+#
+# NOTE: must have "aws.workload.identity" in the client_id_list. TODO: validate this somehow
+#
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider
+data "aws_iam_openid_connect_provider" "existing_oidc_provider" {
+  count = var.create_aws_openid_connect_provider ? 0 : 1
+  url   = data.tls_certificate.tf_certificate.url
+}
+
+# Creates an OIDC provider for Terraform
 #
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider
 resource "aws_iam_openid_connect_provider" "oidc_provider" {
+  count           = var.create_aws_openid_connect_provider ? 1 : 0
   url             = data.tls_certificate.tf_certificate.url
   client_id_list  = ["aws.workload.identity"]
   thumbprint_list = [data.tls_certificate.tf_certificate.certificates[0].sha1_fingerprint]
+}
+
+locals {
+  # Convenience local to get either the created, or the existing, OIDC provider ARN 
+  oidc_arn = coalescelist(aws_iam_openid_connect_provider.oidc_provider.*.arn,
+  data.aws_iam_openid_connect_provider.existing_oidc_provider.*.arn)[0]
 }
 
 # Creates a role which can only be used by the specified HCP Terraform project.
@@ -36,12 +53,12 @@ resource "aws_iam_role" "tf_role" {
    {
      "Effect": "Allow",
      "Principal": {
-       "Federated": "${aws_iam_openid_connect_provider.oidc_provider.arn}"
+       "Federated": "${local.oidc_arn}"
      },
      "Action": "sts:AssumeRoleWithWebIdentity",
      "Condition": {
        "StringEquals": {
-         "${var.tf_hostname}:aud": "${one(aws_iam_openid_connect_provider.oidc_provider.client_id_list)}"
+         "${var.tf_hostname}:aud": "aws.workload.identity"
        },
        "StringLike": {
          "${var.tf_hostname}:sub": "organization:${var.tf_organization_name}:project:${var.tf_project_name}:workspace:*:run_phase:*"

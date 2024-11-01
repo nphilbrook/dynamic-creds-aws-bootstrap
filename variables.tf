@@ -28,3 +28,9 @@ variable "tf_variable_set_name" {
   description = "The name of the variable set you want to target in which to create AWS dynamic cred variables."
   default     = "Dynamic AWS OIDC WIF credentials"
 }
+
+variable "create_aws_openid_connect_provider" {
+  type        = bool
+  description = "If set to true, a new AWS OpenID Connect Provider will be provisioned and managed by this root module. If set to false, an existing provider must already exist in the AWS account for the specified tf_hostname."
+  default     = true
+}
