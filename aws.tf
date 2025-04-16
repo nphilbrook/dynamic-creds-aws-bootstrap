@@ -83,6 +83,8 @@ EOF
 # adhering to the principle fo least privilege. In this example, we'll be dealing with Lambda functions,
 # S3 buckets to host the code, and EC2 instances to demonstrate AMI updates coming from Packer builds.
 #
+# HAHA DISREGARD THAT
+
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy
 resource "aws_iam_policy" "tf_policy" {
   name        = "tf-${local.aws_suffix}"
@@ -94,11 +96,7 @@ resource "aws_iam_policy" "tf_policy" {
  "Statement": [
    {
      "Effect": "Allow",
-     "Action": [
-       "lambda:*",
-       "s3:*",
-       "ec2:*"
-     ],
+     "Action": [ * ],
      "Resource": "*"
    }
  ]
