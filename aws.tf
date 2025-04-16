@@ -5,9 +5,10 @@ locals {
   aws_suffix = (var.tf_project_name == "*" ?
     "${var.tf_organization_name}" :
   "${var.tf_organization_name}-${var.tf_project_name}")
+  audience = "aws.workload.identity"
 }
 
-# Data source used to grab the TLS certificate for Terraform Cloud.
+# Data source used to grab the TLS certificate for Terraform Cloud or the specified hostname
 #
 # https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate
 data "tls_certificate" "tf_certificate" {
@@ -16,12 +17,17 @@ data "tls_certificate" "tf_certificate" {
 
 # Checks for an existing OIDC provider for Terraform
 #
-# NOTE: must have "aws.workload.identity" in the client_id_list. TODO: validate this somehow
-#
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider
 data "aws_iam_openid_connect_provider" "existing_oidc_provider" {
   count = var.create_aws_openid_connect_provider ? 0 : 1
   url   = data.tls_certificate.tf_certificate.url
+  lifecycle {
+    # must have "aws.workload.identity" in the client_id_list.
+    postcondition {
+      condition     = contains(self.client_id_list, local.audience)
+      error_message = "client_id_list for the already-created openid_connect provider must contain \"${local.audience}\"."
+    }
+  }
 }
 
 # Creates an OIDC provider for Terraform
@@ -30,7 +36,7 @@ data "aws_iam_openid_connect_provider" "existing_oidc_provider" {
 resource "aws_iam_openid_connect_provider" "oidc_provider" {
   count           = var.create_aws_openid_connect_provider ? 1 : 0
   url             = data.tls_certificate.tf_certificate.url
-  client_id_list  = ["aws.workload.identity"]
+  client_id_list  = [local.audience]
   thumbprint_list = [data.tls_certificate.tf_certificate.certificates[0].sha1_fingerprint]
 }
 
@@ -58,7 +64,7 @@ resource "aws_iam_role" "tf_role" {
      "Action": "sts:AssumeRoleWithWebIdentity",
      "Condition": {
        "StringEquals": {
-         "${var.tf_hostname}:aud": "aws.workload.identity"
+         "${var.tf_hostname}:aud": "${local.audience}"
        },
        "StringLike": {
          "${var.tf_hostname}:sub": "organization:${var.tf_organization_name}:project:${var.tf_project_name}:workspace:*:run_phase:*"

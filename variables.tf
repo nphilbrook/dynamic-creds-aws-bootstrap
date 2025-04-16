@@ -34,3 +34,8 @@ variable "create_aws_openid_connect_provider" {
   description = "If set to true, a new AWS OpenID Connect Provider will be provisioned and managed by this root module. If set to false, an existing provider must already exist in the AWS account for the specified tf_hostname."
   default     = true
 }
+
+# Automatically injected by Terraform
+variable "TFC_WORKSPACE_SLUG" {
+  type = string
+}

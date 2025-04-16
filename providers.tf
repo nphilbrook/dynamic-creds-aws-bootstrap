@@ -1,5 +1,7 @@
 locals {
-  tags_labels = { "created-by" = "terraform" }
+  tags_labels = { "created-by" = "terraform",
+    "source-workspace-slug" = var.TFC_WORKSPACE_SLUG
+  }
 }
 
 provider "aws" {
