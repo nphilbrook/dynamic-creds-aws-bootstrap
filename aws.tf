@@ -96,7 +96,7 @@ resource "aws_iam_policy" "tf_policy" {
  "Statement": [
    {
      "Effect": "Allow",
-     "Action": [ * ],
+     "Action": [ "*" ],
      "Resource": "*"
    }
  ]
